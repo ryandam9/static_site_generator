@@ -1,0 +1,212 @@
+html {
+    font-size: 62.5%;
+    box-sizing: border-box;
+}
+
+*, *:before, *:after {
+	box-sizing: inherit;
+}
+
+img {
+	max-width: 100%;
+}
+
+/* Use the fonts included */
+@font-face {
+    font-family: DroidSansMono;
+    src: url(/fonts/DroidSansMono.ttf);
+}
+ 
+body {
+    /* height: 980vh; */
+    margin: 0;
+    padding: 0;
+    background: transparent url(/images/wavesOpacity.svg) center no-repeat;
+    background: transparent url(/images/stacked-waves-haikei.svg) center no-repeat; 
+    background: transparent url(/images/blob-scene-haikei.svg) center no-repeat; 
+    background-color: lightblue;
+    background-size: cover;
+    background-attachment: fixed;
+}
+
+.content {
+    margin: 1rem auto;
+    padding: .11rem;
+    background: #fff;
+    width: 98%;
+    border-radius: 1rem;
+    overflow-y: auto;
+}
+
+pre, code {
+    font-family: DroidSansMono, 'Jetbrains Mono' !important;
+    font-size: 1.5rem !important;
+}
+
+pre {
+	border-radius: 10px !important;
+}
+
+
+h1 {
+    font-family: Corben, 'Crimson Text', sans-serif;
+    font-size: 3rem;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+h2 {
+    font-family: Corben, 'Crimson Text', sans-serif;
+    font-size: 2rem;
+    font-width: 400;
+    color: #244bbf;
+}
+
+h3 {
+    font-family: Corben, 'Crimson Text', sans-serif;
+    font-size: 1.5rem;
+    font-width: 400;
+    color: #b054ae;
+}
+
+h4 {
+    font-family: Corben, 'Crimson Text', sans-serif;
+    font-size: 1.3rem;
+    font-width: 400;
+    color: #5F9EA0;
+}
+
+h5 {
+    font-family: Corben, 'Crimson Text', sans-serif;
+    font-size: 1.2rem;
+    font-width: 400;
+    color: #5F9EA0;
+}
+
+li {
+    font-family: 'Crimson Text', sans-serif !important;
+    font-size: 1.8rem !important;
+    font-family: 'Roboto Condensed', sans-serif;
+}
+
+td {
+    font-family: 'Crimson Text', sans-serif !important;
+    font-size: 1.7rem !important;
+}
+
+p {
+    font-family: 'Crimson Text', sans-serif;
+    font-size: 1.8rem !important;
+}
+
+a {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 17.6px;
+    font-weight: 400;
+    color: green;
+    text-decoration: none;
+    /* display: block; */
+    padding: 2px;
+    border-radius: 5px;
+}
+
+a:link {
+	color: teal;
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 17.6px;
+    font-weight: 400;
+}
+
+a:visited {
+	color: rgb(217, 97, 82);
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 17.6px;
+    font-weight: 400;
+}
+
+a:hover {
+    background-color: #1e81b0;
+    color: #ffffff;
+}
+
+ul li {
+    font-family: 'Roboto Condensed', sans-serif;
+    font-size: 17.6px;
+    font-weight: 400;
+    text-decoration: none;
+    color: rgb(86, 86, 86);
+    margin: 3px 0 0px 0;
+}
+
+/* Responsiveness */
+@media screen and (min-width: 375px) {
+    .content {
+        width: 96%;
+        margin: 1rem auto;
+        padding: 10px;
+    }    
+}
+
+@media screen and (min-width: 720px) {
+    .content {
+        width: 90%;
+        margin: 2rem auto;
+        padding: 2rem;
+    }    
+}
+
+
+@media screen and (min-width: 900px) {
+    .content {
+        width: 90%;
+        margin: 5rem auto;
+        /* position: absolute; */
+        /* top: 10%;
+        left: 25%; */
+        padding: 5rem;
+    }
+} 
+
+@media screen and (min-width: 1200px) {
+    .content {
+        width: 55%;
+        margin: 5rem auto;
+        /* position: absolute; */
+        /* top: 10%;
+        left: 25%; */
+        padding: 5rem;
+    }
+} 
+
+/* Style tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+tr {
+    border: 1px solid #ddd;
+}
+
+table thead th {
+  background-color: rgb(246, 166, 66);
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  text-align: left;
+  font-family: 'Roboto Condensed', sans-serif;
+  font-size: 17.6px;
+}
+
+table tbody td {
+  background-color: #fff;
+  color: black;
+  padding: 1.2rem;
+}
+
+.my-footer {
+    margin-bottom: 10px;
+    heigth: 100px;
+}
