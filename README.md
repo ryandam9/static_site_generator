@@ -134,21 +134,6 @@ Serving HTTP on :: port 8000 (http://[::]:8000/) ...
 
 ---
 
-## Deploying to server
-
-- My blog is hosted on AWS S3.
-- This script generates the html files and uploads them to S3.
-
-```shell
-python app.py --index_page_dir "/Users/rk/Desktop/ryandam.net" --domain https://ryandam.net --cloudfront_dist_id "XXXXXXXXXXX"
-```
-
-- `index_page_dir` - HTML Files will be stored here.
-- `domain` - My website domain.
-- `cloudfront_dist_id` - My blog is hosted on AWS S3 using CloudFront Distribution.
-
----
-
 ## Checksum file
 
 - To avoid converting the markdown files every time the script is run, the `checksums.txt` is used.
