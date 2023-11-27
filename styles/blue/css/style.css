@@ -1,0 +1,324 @@
+@import url("https://fonts.googleapis.com/css2?family=Spectral&family=Lora&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Roboto Condensed&display=swap");
+
+/* Use the fonts included with code*/
+@font-face {
+  font-family: DroidSansMono;
+  src: url(/fonts/DroidSansMono.ttf);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+:root {
+  --charcoal-block: #424c55;
+  --delta-blue: #40476d;
+  --violet-blue: #4357ad;
+  --white: #fff;
+  --yellow: #ffbc00;
+
+  --font-color: var(--charcoal-block);
+  --nav-bar-bg-color: var(--violet-blue);
+  --page-bg-color: var(--white);
+  --heading-color: var(--violet-blue);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Spectral", sans-serif;
+  line-height: 1.5;
+  background-color: var(--page-bg-color);
+  color: var(--font-color);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: "Spectral", sans-serif;
+  font-weight: 400;
+  margin: 1rem 0;
+  color: var(--heading-color);
+}
+
+h1 {
+  font-size: 2rem;
+}
+
+p {
+  margin: 0.5rem 0;
+}
+
+/* If we do this, Images won't go outside of their parent. */
+img {
+  width: 100%;
+}
+
+pre,
+code {
+  font-family: DroidSansMono, "Jetbrains Mono" !important;
+  font-size: 1rem;
+}
+
+pre {
+  border-radius: 8px;
+}
+
+h5 {
+  color: var(--heading-color);
+  font-size: 1rem;
+}
+
+ul,
+ol {
+  margin-left: 2rem;
+}
+
+ul li {
+  margin-left: 1rem;
+}
+
+aside ul {
+  margin-left: 0.5rem;
+}
+
+aside ul li {
+  margin-left: 1rem;
+}
+
+blockquote {
+  margin: 1rem 0;
+  padding: 1rem;
+  border-left: 5px solid #f99500;
+  background-color: #f995001a;
+  border-radius: 6px;
+}
+
+li code {
+  background-color: #e1e5f7;
+  padding: 0.1rem;
+  border-radius: 4px;
+}
+
+a {
+  font-family: "Roboto Condensed", sans-serif;
+  font-size: 17.6px;
+  font-weight: 400;
+  color: var(--violet-blue);
+  text-decoration: none;
+  /* display: block; */
+  padding: 2px;
+  border-radius: 5px;
+}
+
+a:hover {
+  background-color: var(--violet-blue);
+  color: var(--white);
+}
+
+hr {
+  margin: 1rem 0;
+}
+
+/* -------------------------- */
+/* Style tables               */
+/* -------------------------- */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  border: 1px solid #ddd;
+}
+
+tr {
+  border: 1px solid #ddd;
+}
+
+table thead th {
+  background-color: var(--violet-blue);
+  color: white;
+  font-weight: bold;
+  padding: 10px;
+  text-align: left;
+  font-family: "Roboto Condensed", sans-serif;
+  font-size: 17.6px;
+}
+
+table tbody td {
+  background-color: #fff;
+  color: black;
+  padding: 1.2rem;
+}
+
+.my-footer {
+  margin-bottom: 10px;
+  height: 100px;
+}
+
+/* -------------------------- */
+/* Navbar                     */
+/* -------------------------- */
+#main-nav {
+  background-color: var(--nav-bar-bg-color);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+#main-nav .container {
+  display: flex;
+  padding: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#main-nav .logo {
+  font-size: 1.5rem;
+  color: var(--white);
+  padding-left: 5rem;
+}
+
+#main-nav ul {
+  display: flex;
+  justify-self: end;
+  list-style: none;
+}
+
+#main-nav li {
+  padding: 0.5rem 1.5rem;
+}
+
+#main-nav a {
+  text-decoration: none;
+  color: var(--white);
+  border-bottom: 3px solid transparent;
+  padding-bottom: 0.5rem;
+  transition: border-color 0.3s;
+}
+
+#main-nav a:hover {
+  border-color: #ccc;
+}
+
+#main-nav a.current {
+  border-color: var(--yellow);
+}
+
+/* -------------------------- */
+/* Content section            */
+/* -------------------------- */
+.content-section {
+  max-width: 1250px;
+  min-height: 85vh;
+  display: grid;
+  margin: auto;
+  grid-template-columns: 900px 350px;
+}
+
+.container-1 {
+  max-width: 900px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background-color: var(--white);
+  border-radius: 12px;
+}
+
+.container-2 {
+  max-width: 300px;
+  margin: 1rem 1rem;
+  padding-top: 1rem;
+  border-radius: 12px;
+}
+
+.container-2 aside {
+  background-color: color(--white);
+  border-radius: 12px;
+  position: sticky;
+  top: 0;
+}
+
+/* -------------------------- */
+/* Sidebar                    */
+/* -------------------------- */
+#toc-container {
+  background-color: var(--violet-blue);
+  color: var(--white);
+  padding: 1rem;
+  border-radius: 8px;
+  /* border: 1px dashed var(--violet-blue); */
+
+  background: rgb(125, 163, 203);
+  background: linear-gradient(
+    90deg,
+    rgba(125, 163, 203, 1) 0%,
+    rgba(122, 159, 201, 1) 0%,
+    rgba(157, 208, 230, 1) 1%,
+    rgba(90, 114, 173, 1) 3%
+  );
+
+  max-height: 90vh;
+  overflow-y: scroll;
+}
+
+#toc-container a {
+  color: var(--white);
+  font-family: "Roboto condensed", Courier, monospace;
+  font-size: 1rem;
+}
+
+#toc-container a:hover {
+  background-color: var(--violet-blue);
+  color: var(--white);
+}
+
+/* -------------------------- */
+/* Footer                     */
+/* -------------------------- */
+#main-footer .footer-container {
+  background-color: #e3e7f7;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  grid-gap: 1.5rem;
+  align-items: center;
+  justify-items: center;
+  padding: 1rem;
+  color: #333;
+}
+
+#main-footer .footer-element {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  text-align: center;
+  border-radius: 8px;
+  height: 300px;
+  max-height: 300px;
+  padding: 1rem;
+  border: 1px solid #fff;
+}
+
+#main-footer .footer-container img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+}
+
+#main-footer .footer-container > *:last-child {
+  grid-column: 1 / span 4;
+  padding: 1rem;
+  text-align: center;
+}
+
+#main-footer .footer-element .footer-header {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 1rem;
+}

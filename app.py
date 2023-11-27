@@ -54,24 +54,53 @@ def prepare_html_head(domain: str, title: str) -> str:
     return f"""
     <!doctype html>
     <html lang="en">
-
     <head>
-        <meta charset="UTF-8">
-        <meta name="viewport"
-            content="width=device-width, user-scalable=no, initial-scale=1.0, 
-            maximum-scale=1.0, 
-            minimum-scale=1.0">
-        <meta http-equiv="X-UA-Compatible" content="ie=edge">
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+        name="description"
+        content="{title}"
+        />
+        <meta name="keywords" content="Cloud Computing" />
         <link rel="shortcut icon" type="image/png" href="{domain}/images/logo.png">
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto|Jetbrains Mono|Crimson Text|Corben|Roboto Condensed">
-        <link rel="stylesheet" href="{domain}/css/prism.css">
-        <link rel="stylesheet" href="{domain}/css/generic.css">
         <title>{title}</title>
+
+        <link rel="stylesheet" href="{domain}/css/prism.css" />
+        <link rel="stylesheet" href="{domain}/css/style.css" />
+
+        <link
+        rel="stylesheet"
+        media="screen and (max-width: 1024px)"
+        href="{domain}/css/mobile.css"
+        />
+
+        <script src="{domain}/js/prism.js"></script>
     </head>
 
     <body>
-        <article>
-        <div class="content">
+        <!-- Navbar -->
+        <nav id="main-nav">
+        <div class="container">
+            <!-- Menu -->
+            <div class="logo">Ravi</div>
+
+            <ul>
+            <li><a href="#">Home</a></li>
+            <li>
+                <a href="https://github.com/ryandam9" target="_blank">Projects</a>
+            </li>
+            <li><a class="current" href="{domain}/blog.html" target="_blank">Blog</a></li>
+            <li><a href="{domain}/about.html" target="_blank">About</a></li>
+            <li>
+                <a href="https://github.com/ryandam9" target="_blank">GitHub</a>
+            </li>
+            </ul>
+        </div>
+        </nav>
+
+        <section>
+        <div class="content-section">
+            <div class="container-1">
     """
 
 
@@ -83,10 +112,29 @@ def get_html_tail(domain: str) -> str:
     :return: HTML tail section
     """
     return f"""
-    </div>
-    </article>
-    <div class="my-footer"></div>
-    <script src="{domain}/js/prism.js"></script>
+        </div>
+
+        <!-- Table of contents -->
+        <div class="container-2">
+          <aside>
+            <div id="toc-container"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer id="main-footer">
+      <div class="container">
+        <div class="footer-container">
+          <div>Generated using <a href="https://github.com/ryandam9/static_site_generator">Static Site Generator</a></div>
+        </div>
+      </div>
+    </footer>
+
+    <script src="{domain}/js/app.js"></script>
+  </body>
+</html>
     """
 
 
@@ -129,6 +177,11 @@ def copy_images_to_target_dir(
     if matches:
         for image_path in matches:
             image_path = image_path[0] if image_path[0] else image_path[1]
+
+            # Ignore the paths that have "img"
+            if "http:" in image_path:
+                continue
+
             image_path = image_path.replace("../", "")
             image_path = image_path.replace("./", "")
             image_abs_path = os.path.abspath(os.path.join(markdown_dir, image_path))
@@ -138,6 +191,10 @@ def copy_images_to_target_dir(
                 print(f"Image File {image_abs_path} copied to {target_dir}")
             except Exception as err:
                 print(f"Error copying image file {image_path} - {err}")
+                print(f"Markdown file directory: {markdown_dir}")
+                print(f"Target directory: {target_dir}")
+                print("Image files identfiied in the markdown file:", matches)
+                print("html, contents:", html_contents)
                 sys.exit(1)
 
 
@@ -237,6 +294,7 @@ def convert_markdown_to_html_wrapper(yaml_contents: dict[str, str]) -> None:
 
         today = date.today()
         creation_date = today.strftime("%Y/%m/%d")
+        creation_date = "1900/01/01"
 
         if match:
             creation_date = match.group(1)
@@ -404,13 +462,13 @@ def prepare_index_page() -> None:
 
     html_list += "</ul>"
 
-    index_page_template = "./index_template.html"
+    index_page_template = "./blog_template.html"
 
     with open(index_page_template, "r") as file:
         template = file.read()
 
     index_page_content = template.replace("[[links]]", html_list)
-    index_page = os.path.join(INDEX_PAGE_DIR, "index.html")
+    index_page = os.path.join(INDEX_PAGE_DIR, "blog.html")
 
     # Delete if exists
     if os.path.exists(index_page):
@@ -419,7 +477,7 @@ def prepare_index_page() -> None:
     with open(index_page, "w") as file:
         file.write(index_page_content)
 
-    print(f"\nIndex page written to {index_page}")
+    print(f"Blog page written to {index_page}")
 
 
 def create_site_map():
@@ -578,7 +636,7 @@ def main():
     convert_markdown_to_html_wrapper(yaml_contents)
     prepare_index_page()
     create_site_map()
-    apply_styling("serious_earth")
+    # apply_styling("blue")
 
     if CLOUD_FRONT_DISTRIBUTION_ID is not None:
         sync_with_s3_bucket()

@@ -21,9 +21,9 @@ body {
     /* height: 980vh; */
     margin: 0;
     padding: 0;
+    background: transparent url(/images/stacked-waves-haikei.svg) center no-repeat;
+    background: transparent url(/images/blob-scene-haikei.svg) center no-repeat;
     background: transparent url(/images/wavesOpacity.svg) center no-repeat;
-    background: transparent url(/images/stacked-waves-haikei.svg) center no-repeat; 
-    background: transparent url(/images/blob-scene-haikei.svg) center no-repeat; 
     background-color: lightblue;
     background-size: cover;
     background-attachment: fixed;
