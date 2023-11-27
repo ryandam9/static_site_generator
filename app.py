@@ -5,16 +5,13 @@
 #    - Creates a YYYY/MM/DD directory structure
 #    - Creates an index.html file with links to all the HTML files
 #    - Copies the images to the YYYY/MM/DD directory structure
-#    - Copies the files to AWS S3
-#    - Refreshes the CloudFront distribution
 #
-# Usage:
-# python md_to_html.py [-h] [--domain DOMAIN] [--port PORT] [--index_page_dir INDEX_PAGE_DIR]
 # --------------------------------------------------------------------------------------
 import argparse
 import datetime
 import fnmatch
 import hashlib
+import logging
 import os
 import re
 import shutil
@@ -24,7 +21,14 @@ from datetime import date
 
 import yaml
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s: [@ %(filename)s:%(lineno)d] ==> %(message)s",
+)
+logger = logging.getLogger(__name__)
+
 MARKDOWN_FILES_LIST = "md_files.yml"
+CHECKSUM_FILE = ".checksums.txt"
 
 # List of files to be excluded from index.html page.
 EXCLUSION_LIST = [
@@ -32,8 +36,6 @@ EXCLUSION_LIST = [
     "index_template.html",
     "graph_viz.html",
 ]
-
-BLOG_DOMAIN = "ryandam.net"
 
 
 def prepare_html_head(domain: str, title: str) -> str:
@@ -146,16 +148,16 @@ def read_yaml_file():
         with open(MARKDOWN_FILES_LIST, "r") as file:
             yaml_file = yaml.safe_load(file)
 
-        print(f"YAML File read: {MARKDOWN_FILES_LIST}")
+        logger.info(f"YAML File read: {MARKDOWN_FILES_LIST}")
         return yaml_file
     except Exception as err:
-        print(f"Error reading {MARKDOWN_FILES_LIST} file - {err}")
+        logger.error(f"Error reading {MARKDOWN_FILES_LIST} file - {err}")
         sys.exit(1)
 
 
 def copy_images_to_target_dir(
     markdown_dir: str, html_contents: str, target_dir: str
-) -> None:
+) -> int:
     """
     Copies any Images used in Markdown file to the target directory where html file is present.
     """
@@ -174,6 +176,8 @@ def copy_images_to_target_dir(
     # Find all image file paths using regex
     matches = re.findall(pattern, html_contents)
 
+    count = 0
+
     if matches:
         for image_path in matches:
             image_path = image_path[0] if image_path[0] else image_path[1]
@@ -188,14 +192,17 @@ def copy_images_to_target_dir(
 
             try:
                 shutil.copy(image_abs_path, target_dir)
-                print(f"Image File {image_abs_path} copied to {target_dir}")
+                logger.info(f"Image File {image_abs_path} copied to {target_dir}")
+                count += 1
             except Exception as err:
-                print(f"Error copying image file {image_path} - {err}")
-                print(f"Markdown file directory: {markdown_dir}")
-                print(f"Target directory: {target_dir}")
-                print("Image files identfiied in the markdown file:", matches)
-                print("html, contents:", html_contents)
+                logger.error(f"Error copying image file {image_path} - {err}")
+                logger.error(f"Markdown file directory: {markdown_dir}")
+                logger.error(f"Target directory: {target_dir}")
+                logger.error("Image files identified in the markdown file:", matches)
+                logger.error("html, contents:", html_contents)
                 sys.exit(1)
+
+    return count
 
 
 def convert_markdown_to_html(markdown_file_path: str) -> str:
@@ -222,8 +229,8 @@ def convert_markdown_to_html(markdown_file_path: str) -> str:
             text=True,
         )
     except Exception as err:
-        print("Unable to convert markdown to HTML: ", str(err))
-        print(
+        logger.error("Unable to convert markdown to HTML: ", str(err))
+        logger.error(
             f"Tried to execute this command: [markdown --extension-set GitHubFlavored {markdown_file_path}"
         )
         sys.exit(1)
@@ -247,17 +254,16 @@ def convert_markdown_to_html_wrapper(yaml_contents: dict[str, str]) -> None:
     """
     checksums = dict()
 
-    # Read the checksums.txt file
+    # Read the .checksums.txt file
     # It holds the checksum of the markdown file. It is used to determine if the
     # markdown file has changed.
     try:
-        with open("checksums.txt", "r") as file:
+        with open(f"{CHECKSUM_FILE}", "r") as file:
             for line in file:
                 markdown_file, checksum = line.strip().split("~")
                 checksums[markdown_file] = checksum
     except Exception as err:
-        print(f"Error reading checksums.txt file - {err}")
-        print("This can happen if this is the first & it is fine!")
+        logger.error(f"Error reading {CHECKSUM_FILE} file - {err}")
 
     # Loop through the markdown files & convert them to HTML
     for index, entry in enumerate(yaml_contents["markdown_files"]):
@@ -266,7 +272,7 @@ def convert_markdown_to_html_wrapper(yaml_contents: dict[str, str]) -> None:
         markdown_file_name = os.path.basename(markdown_file_path)
 
         if not os.path.exists(markdown_file_path):
-            print(f"Markdown file {markdown_file_path} does not exist.")
+            logger.error(f"Markdown file {markdown_file_path} does not exist.")
             continue
 
         # Get MD5 Checksum
@@ -280,7 +286,7 @@ def convert_markdown_to_html_wrapper(yaml_contents: dict[str, str]) -> None:
             previous_md5_checksum = None
 
         if current_md5_checksum == previous_md5_checksum:
-            print(f"{index + 1:<3} - [NOT CHANGED] - {markdown_file_path}")
+            logger.info(f"{index + 1:<3} - [NOT CHANGED] - {markdown_file_path}")
             continue
         else:
             checksums[markdown_file_path] = current_md5_checksum
@@ -329,19 +335,19 @@ def convert_markdown_to_html_wrapper(yaml_contents: dict[str, str]) -> None:
         with open(html_file, "w") as file:
             file.write(html_contents)
 
-        print(f"{index + 1} - HTML File written to {html_file}")
-        print("-" * 100)
+        logger.info(f"{index + 1} - HTML File written to {html_file}")
+        logger.info("-" * 100)
 
     # Write the checksums to a file
     try:
-        with open("checksums.txt", "w") as file:
+        with open(f"{CHECKSUM_FILE}", "w") as file:
             for markdown_file, checksum in checksums.items():
                 file.write(f"{markdown_file}~{checksum}\n")
     except Exception as err:
-        print(f"Error writing checksums.txt file - {err}")
+        logger.error(f"Error writing {CHECKSUM_FILE} file - {err}")
 
-    print("\nAll markdown files processed.")
-    print("\nChecksums written to checksums.txt file.")
+    logger.info("\nAll markdown files processed.")
+    logger.info(f"\nChecksums written to {CHECKSUM_FILE} file.")
 
 
 def get_md5_checksum(file: str) -> str:
@@ -374,7 +380,7 @@ def convert_string_to_date(entry: str) -> datetime.date:
 
         return datetime.date(year, month, day)
     except ValueError:
-        print(f"Error converting string to date - {entry}")
+        logger.error(f"Error converting string to date - {entry}")
         return datetime.date(1900, 1, 1)
 
 
@@ -424,11 +430,11 @@ def prepare_index_page() -> None:
     # Collect all the HTML files
     html_files = collect_all_html_files()
 
-    print("\nAll html files:")
+    logger.info("\nAll html files:")
     for x in html_files:
-        print(x)
+        logger.info(x)
 
-    print("\nGoing to create index.html file")
+    logger.info("\nGoing to create index.html file")
     html_list = "<ul>"
 
     # This step prepares a list of HTML <li> elements
@@ -477,7 +483,7 @@ def prepare_index_page() -> None:
     with open(index_page, "w") as file:
         file.write(index_page_content)
 
-    print(f"Blog page written to {index_page}")
+    logger.info(f"Blog page written to {index_page}")
 
 
 def create_site_map():
@@ -485,7 +491,7 @@ def create_site_map():
     Creates a sitemap.txt file
     :return: None
     """
-    print("\nInside [create_site_map]")
+    logger.info("\nInside [create_site_map]")
 
     sitemap_file_location = os.path.join(INDEX_PAGE_DIR, "sitemap.txt")
     sitemap_file = open(sitemap_file_location, "w")
@@ -496,7 +502,7 @@ def create_site_map():
         sitemap_file.write(entry + "\n")
 
     sitemap_file.close()
-    print(f"Sitemap file created - {sitemap_file_location}")
+    logger.info(f"Sitemap file created - {sitemap_file_location}")
 
 
 def store_md5_checksums():
@@ -514,121 +520,11 @@ def store_md5_checksums():
             file_directory = file_path.split("/")[-2]
             checksums[file_directory] = md5_checksum
 
-    print("\nMD5 Checksums:")
+    logger.info("\nMD5 Checksums:")
     for filename, md5 in checksums.items():
-        print(f"{md5} {filename}")
+        logger.info(f"{md5} {filename}")
 
     return checksums
-
-
-def sync_with_s3_bucket() -> None:
-    """
-    Syncs the target directory with the S3 bucket
-
-    NOTE: Rather than syncing the entire directory, we are only syncing
-          specific files. Each file type should be included in the list below.
-
-    :return: None
-    """
-    sync_cmd = f"""
-    aws s3 sync {INDEX_PAGE_DIR} s3://{BLOG_DOMAIN} \
-        --exclude '*' \
-        --include '*.html' \
-        --include '*.js' \
-        --include '*.css' \
-        --include '*.png' \
-        --include '*.jpg' \
-        --include '*.JPG' \
-        --include '*.jpeg' \
-        --include '*.svg' \
-        --include '*.ttf' \
-        --include '*.txt' \
-        --include '*.mp4' \
-        --include '*.gif'
-    """
-    result = subprocess.run(sync_cmd, shell=True, capture_output=True, text=True)
-
-    # Check the result
-    if result.returncode == 0:
-        output = result.stdout
-        print(output)
-    else:
-        error = result.stderr
-        print(error)
-        sys.exit(1)
-
-
-def refresh_cloudfront() -> None:
-    """
-    Refresh the CloudFront distribution
-    """
-    # As per https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html,
-    # the paths must be quoted.
-    cmd = f'aws cloudfront create-invalidation --distribution-id={CLOUD_FRONT_DISTRIBUTION_ID} --paths "/*"'
-    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-
-    # Check the result
-    if result.returncode == 0:
-        output = result.stdout
-        print(output)
-    else:
-        error = result.stderr
-        print(error)
-        sys.exit(1)
-
-
-def apply_styling(theme: str) -> None:
-    """
-    Applies styling to the HTML files
-    """
-    style_dir = f"./styles/{theme}"
-
-    # Copy the files only if they don't exist in the target directory.
-    if not os.path.exists(f"{INDEX_PAGE_DIR}/css"):
-        subprocess.run(
-            f"cp -R {style_dir}/css {INDEX_PAGE_DIR}",
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-        print("css/ directory copied!")
-
-    if not os.path.exists(f"{INDEX_PAGE_DIR}/fonts"):
-        subprocess.run(
-            f"cp -R {style_dir}/fonts {INDEX_PAGE_DIR}",
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-        print("fonts/ directory copied!")
-
-    if not os.path.exists(f"{INDEX_PAGE_DIR}/images"):
-        subprocess.run(
-            f"cp -R {style_dir}/images {INDEX_PAGE_DIR}",
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-        print("images/ directory copied!")
-
-    if not os.path.exists(f"{INDEX_PAGE_DIR}/js"):
-        subprocess.run(
-            f"cp -R {style_dir}/js {INDEX_PAGE_DIR}",
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-        print("js/ directory copied!")
-
-    if not os.path.exists(f"{INDEX_PAGE_DIR}/policy.html"):
-        subprocess.run(
-            f"cp -R {style_dir}/policy.html {INDEX_PAGE_DIR}",
-            shell=True,
-            capture_output=True,
-            text=True,
-        )
-
-    print(f"\nStyling applied to HTML files using {style_dir}\n")
 
 
 def main():
@@ -636,31 +532,22 @@ def main():
     convert_markdown_to_html_wrapper(yaml_contents)
     prepare_index_page()
     create_site_map()
-    # apply_styling("blue")
-
-    if CLOUD_FRONT_DISTRIBUTION_ID is not None:
-        sync_with_s3_bucket()
-        refresh_cloudfront()
 
 
 # --------------------------------------------------------------------------------------------------#
 # Main section                                                                                      #
 # --------------------------------------------------------------------------------------------------#
 parser = argparse.ArgumentParser()
-parser.add_argument(
-    "--domain",
-    help="Domain name [E.g. https://ryandam.net, http://localhost]. Default is http://localhost",
-    type=str,
-)
-parser.add_argument("--port", help="Port number [Default: 8000]", type=str)
+
 parser.add_argument(
     "--index_page_dir",
-    help="Index page directory [Location where HTML files will be placed]",
+    help="Index page directory [Location where generated HTML files will be placed]",
     type=str,
 )
+
 parser.add_argument(
-    "--cloudfront_dist_id",
-    help="CloudFront distribution ID [For Blogs deployed on AWS]",
+    "--domain",
+    help="Domain name [E.g. ryandam.net, localhost].",
     type=str,
 )
 
@@ -670,35 +557,31 @@ args = parser.parse_args()
 if not vars(args):
     parser.print_help()
 
-DOMAIN = args.domain
-PORT = args.port
 INDEX_PAGE_DIR = args.index_page_dir
-
-if DOMAIN is None:
-    DOMAIN = "http://localhost"
-
-if PORT is None:
-    PORT = "8000"
-
-DOMAIN_WITH_PORT = f"{DOMAIN}:{PORT}"
-
-# Normally, websites are hosted on port 80. We don't need to specify the port number in the URL.
-if "localhost" not in DOMAIN:
-    DOMAIN_WITH_PORT = f"{DOMAIN}"
+DOMAIN = args.domain
 
 # Target directory
 if INDEX_PAGE_DIR is not None:
     TARGET_DIR = os.path.join(INDEX_PAGE_DIR, "blog")
 else:
-    print("ERROR: Index page directory is not specified.")
-    print(
+    logger.error("ERROR: Index page directory is not specified.")
+    logger.error(
         "       Please specify the index page directory using the --index_page_dir argument."
     )
     sys.exit(1)
 
-# CloudFront distribution ID
-# If this is not specified, then the website will not be synced with the S3 bucket.
-CLOUD_FRONT_DISTRIBUTION_ID = args.cloudfront_dist_id
+if DOMAIN is None:
+    logger.error(
+        "ERROR: Domain is needed. For localhost, pass localhost as the domain."
+    )
+    logger.error("       Please specify domain name using --domain argument.")
+    sys.exit(1)
+
+# Normally, websites are hosted on port 80. We don't need to specify the port number in the URL.
+if "localhost" not in DOMAIN:
+    DOMAIN_WITH_PORT = f"https://{DOMAIN}"
+else:
+    DOMAIN_WITH_PORT = f"http://{DOMAIN}:8000"
 
 if __name__ == "__main__":
     main()

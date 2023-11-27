@@ -9,12 +9,19 @@
 #                                                                             #
 # ----------------------------------------------------------------------------#
 
-deploy_to_cloud="$1"
+# Domain name of the blog
+if [ -z "$1" ]; then
+    domain_name="localhost"
+else
+    domain_name="$1"
+fi
 
-# If not passed, default to false
-if [ -z "$deploy_to_cloud" ]; then
-    deploy_to_cloud="false"
-    echo "NOTE: Not Deploying to Cloud. If you want, pass a flag 'yes'"
+# CloudFront Distribution ID
+if [ -z "$2" ]; then
+    cloudfront_dist_id=""
+    echo "NOTE: CloudFront Distribution ID not passed. Will not deploy to CloudFront"
+else
+    cloudfront_dist_id="$2"
 fi
 
 WEB_SITE_NAME="ryandam.net"
@@ -24,7 +31,8 @@ STYLE_NAME="blue"
 # ----------------------------------------------------------------------------#
 # DO NOT Delete this unless to regenerate all the HTML files from Markdown    #
 # ----------------------------------------------------------------------------#
-# rm ./checksums.txt
+rm -rf ./.checksums.txt
+touch ./.checksums.txt
 
 # ----------------------------------------------------------------------------#
 # Delete some files at the target location
@@ -62,15 +70,41 @@ cp ./policy.html "${WEB_SITE_LOCATION}"
 # ----------------------------------------------------------------------------#
 # Generate HTML Files from Markdown
 # ----------------------------------------------------------------------------#
+python3 app.py --index_page_dir "${WEB_SITE_LOCATION}" --domain "${domain_name}"
+rc=$?
 
-if [ "$deploy_to_cloud" = "true" ]; then
-    python3 app.py \
-        --index_page_dir "${WEB_SITE_LOCATION}" \
-        --domain https://ryandam.net \
-        --cloudfront_dist_id "E3T6GHYM5S5H1J"
-else
-    python3 app.py \
-        --index_page_dir "${WEB_SITE_LOCATION}"
+if [ $rc -ne 0 ]; then
+    echo "ERROR: Failed to generate HTML files from Markdown"
+    exit 1
+fi
+
+# ----------------------------------------------------------------------------#
+# Sync with S3 bucket
+# Note - Rather than syncing all files, we only sync the ones we need
+#        selectively.
+# ----------------------------------------------------------------------------#
+if [ -n "${cloudfront_dist_id}" ]; then
+    aws s3 sync "${WEB_SITE_LOCATION}" s3://"${domain_name}" \
+        --exclude '*' \
+        --include '*.html' \
+        --include '*.js' \
+        --include '*.css' \
+        --include '*.png' \
+        --include '*.jpg' \
+        --include '*.JPG' \
+        --include '*.jpeg' \
+        --include '*.svg' \
+        --include '*.ttf' \
+        --include '*.txt' \
+        --include '*.mp4' \
+        --include '*.gif'
+
+    # ----------------------------------------------------------------------------#
+    # Invalidate CloudFront
+    # NOTE: As per https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/Invalidation.html,
+    #       the paths must be quoted.
+    # ----------------------------------------------------------------------------#
+    aws cloudfront create-invalidation --distribution-id="${cloudfront_dist_id}" --paths "/*"
 fi
 
 exit 0
